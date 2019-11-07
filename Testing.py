@@ -1,61 +1,69 @@
-
-#imports
 from selenium import webdriver
-import bs4 as bs 
-import urllib.request
+from bs4 import BeautifulSoup
 
+import pandas as pd
 
 url = 'https://www.oddschecker.com/au/australian-rules'
-
-#before headers 
-response=requests.get(url)
-print(response)
-
-#add headers to bypass 403 error
-user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
-headers={'User-Agent': user_agent}
-
-#after header
-response=requests.get(url, headers=headers)
-##html=response.content
-print(response)
-
-
 driver = webdriver.Chrome('/Users/karthus/Desktop/chromedriver 3')
 driver.get(url)
 html = driver.page_source
 
+#BeautifulSoup grab html
+soup = BeautifulSoup(html, 'lxml')
 
-#Use BeautifulSoup
-sauce = urllib.request.urlopen(url).read()
-soup = bs.BeautifulSoup(sauce,'lxml')
-#print(soup.find_all('class'))
+Bet_list=[]
+Home_odds_list=[]
+Away_odds_list=[]
+
+Team_list=[]
+Home_team_list=[]
+Away_team_list=[]
+
+Date_list=[]
+Time_list=[]
+
+#counter set to 0
+i=0;
+j=0;
+#enable viewing how tags are nested in the document
+#soup.prettify()
+
+for bet in soup.find_all("div", class_="_1NtPy1"):
+    Bet_list.append(bet.text)
+
+for bet in Bet_list:
+    if (i%2==0):
+        Home_odds_list.append(bet)       
+    else:
+        Away_odds_list.append(bet)
+    i=i+1
+    
+for Team in soup.find_all("div", class_="_2tehgH"):
+    Team_list.append(Team.text)
+    
+for Team in Team_list:
+    if (j%2==0):
+        Home_team_list.append(Team)
+    else:
+        Away_team_list.append(Team)
+    j=j+1
+
+for Date in soup.find_all("div", class_="_1svvs0"):
+    Date_list.append(Date.text)
+for Time in soup.find_all("div", class_="_1ob6_g"):
+    Time_list.append(Time.text)
+    
+    
+print(Home_odds_list)
+print(Away_odds_list)
+print(Home_team_list)
+print(Away_team_list)
 
 
-#close browser instance
-driver.quit()
+#df=pd.DataFrame({'Home_team':Home_team_list})
+#print(df)
 
 
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
+Date_list=[]
+Time_list=[]
 
