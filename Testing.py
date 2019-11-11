@@ -24,10 +24,11 @@ tag = {
     "time"  : "_1ob6_g",
     "odds"  : "_1NtPy1",
     "teams" : "_2tehgH", 
+    "urls"  : "_119e1b",
 }
 
 #For a game match
-def parse_games(game_day, game_time_list, game_team_list, game_odds_list):
+def parse_games(game_day, game_time_list, game_team_list, game_odds_list,game_url_list):
     """Parse all the lists into a list with each tuple storing the game information"""
     game_list = [] # for storing all games
     
@@ -38,18 +39,21 @@ def parse_games(game_day, game_time_list, game_team_list, game_odds_list):
     home_team_list, away_team_list = split_list(game_team_list)
     home_odds_list, away_odds_list = split_list(game_odds_list)
     
-    for time, home_team, away_team, home_odds, away_odds in zip(game_time_list, home_team_list, away_team_list,
-                                                               home_odds_list, away_odds_list):
-        record = (game_day, time, home_team, away_team, home_odds, away_odds)
+    for time, home_team, away_team, home_odds, away_odds,url in zip(game_time_list, home_team_list, away_team_list,home_odds_list, away_odds_list,game_url_list):
+    
+        record = (game_day, time, home_team, away_team, home_odds, away_odds,url)
         game_list.append(record)
     return game_list
 
 #for all game matches
 all_games_list = []
 
+
+# Start 
 for game in soup.find_all("div", class_=tag['games']):
     # for each game, we will store it's information into the game_list
     game_time_list, game_odds_list, game_team_list = [], [], []
+    game_url_list=[]
     for date in game.findAll("div", class_ = tag['date']):
         game_day = date.text
     for time in game.findAll("div", class_ = tag['time']):
@@ -58,19 +62,19 @@ for game in soup.find_all("div", class_=tag['games']):
         game_team_list.append(teams.text)
     for odds in game.findAll("div", class_ = tag['odds']):
         game_odds_list.append(odds.text)
-    game_list = parse_games(game_day, game_time_list, game_odds_list, game_team_list)
-    all_games_list.append(game_list)
+    for urls in game.findAll("a", class_= tag['urls']):
+        game_url_list.append(urls.get('href'))
 
-for url in soup.findAll('a', href=True):
-    url_list.append(url.get('href'))
+    game_list = parse_games(game_day, game_time_list, game_odds_list, game_team_list,game_url_list)
+    all_games_list.append(game_list)
     
     
-print(all_games_list)
+#print(game_url_list)
+#print(all_games_list)
 flat_games_list = [item for sublist in all_games_list for item in sublist]
 print(flat_games_list)
 
 df = pd.DataFrame(flat_games_list)
 
-df.columns = ["date", "time", "home_odds", "away_odds", "home", "away"]
+df.columns = ["date", "time", "home_odds", "away_odds", "home", "away","urls"]
 print(df)
-print(url_list)
