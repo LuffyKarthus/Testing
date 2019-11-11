@@ -1,9 +1,9 @@
 from selenium import webdriver
 from bs4 import BeautifulSoup
-
 import pandas as pd
 
 url = 'https://www.oddschecker.com/au/australian-rules'
+
 driver = webdriver.Chrome('/Users/karthus/Desktop/chromedriver 3')
 driver.get(url)
 html = driver.page_source
@@ -11,60 +11,66 @@ html = driver.page_source
 #BeautifulSoup grab html
 soup = BeautifulSoup(html, 'lxml')
 
-Date_list=[]
-Time_list=[]
+#initialisation
+date_list, time_list, odds_list = [], [], []
+home_odds_list, away_odds_list = [], []
+team_list, home_team_list, away_team_list = [], [], []
+url_list=[]
 
-Bet_list=[]
-Home_odds_list=[]
-Away_odds_list=[]
+#Dictionary for tags
+tag = {
+    "games" : "_2nWFsl",
+    "date"  : "_1svvs0",
+    "time"  : "_1ob6_g",
+    "odds"  : "_1NtPy1",
+    "teams" : "_2tehgH", 
+}
 
-Team_list=[]
-Home_team_list=[]
-Away_team_list=[]
-
-Date_list=[]
-Time_list=[]
-
-#counter set to 0
-i=0;
-j=0;
-
-#Loop for all Bet_rate
-for bet in soup.find_all("div", class_="_1NtPy1"):
-    Bet_list.append(bet.text)
-#Split into Home_odds and Away_Odds
-for bet in Bet_list:
-    if (i%2==0):
-        Home_odds_list.append(bet)       
-    else:
-        Away_odds_list.append(bet)
-    i=i+1
+#For a game match
+def parse_games(game_day, game_time_list, game_team_list, game_odds_list):
+    """Parse all the lists into a list with each tuple storing the game information"""
+    game_list = [] # for storing all games
     
-# Loop for all Teams
-for Team in soup.find_all("div", class_="_2tehgH"):
-    Team_list.append(Team.text)
+    def split_list(alist):
+        """Split a list into two lists with odd/even indices"""
+        return alist[0:][::2], alist[1:][::2]
     
-#Split into Home_team and Away_team  
-for Team in Team_list:
-    if (j%2==0):
-        Home_team_list.append(Team)
-    else:
-        Away_team_list.append(Team)
-    j=j+1
+    home_team_list, away_team_list = split_list(game_team_list)
+    home_odds_list, away_odds_list = split_list(game_odds_list)
+    
+    for time, home_team, away_team, home_odds, away_odds in zip(game_time_list, home_team_list, away_team_list,
+                                                               home_odds_list, away_odds_list):
+        record = (game_day, time, home_team, away_team, home_odds, away_odds)
+        game_list.append(record)
+    return game_list
 
-#loop for all Date   
-for Date in soup.find_all("div", class_="_1svvs0"):
-    Date_list.append(Date.text)
-#Loop for all Time
-for Time in soup.find_all("div", class_="_1ob6_g"):
-    Time_list.append(Time.text)
+#for all game matches
+all_games_list = []
+
+for game in soup.find_all("div", class_=tag['games']):
+    # for each game, we will store it's information into the game_list
+    game_time_list, game_odds_list, game_team_list = [], [], []
+    for date in game.findAll("div", class_ = tag['date']):
+        game_day = date.text
+    for time in game.findAll("div", class_ = tag['time']):
+        game_time_list.append(time.text)
+    for teams in game.findAll("div", class_ = tag['teams']):
+        game_team_list.append(teams.text)
+    for odds in game.findAll("div", class_ = tag['odds']):
+        game_odds_list.append(odds.text)
+    game_list = parse_games(game_day, game_time_list, game_odds_list, game_team_list)
+    all_games_list.append(game_list)
+
+for url in soup.findAll('a', href=True):
+    url_list.append(url.get('href'))
     
     
-print(Home_odds_list)
-print(Away_odds_list)
-print(Home_team_list)
-print(Away_team_list)
+print(all_games_list)
+flat_games_list = [item for sublist in all_games_list for item in sublist]
+print(flat_games_list)
 
-#df=pd.DataFrame({'Home_team':Home_team_list})
-#print(df)
+df = pd.DataFrame(flat_games_list)
 
+df.columns = ["date", "time", "home_odds", "away_odds", "home", "away"]
+print(df)
+print(url_list)
