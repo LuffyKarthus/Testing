@@ -77,4 +77,5 @@ print(flat_games_list)
 df = pd.DataFrame(flat_games_list)
 
 df.columns = ["date", "time", "home_odds", "away_odds", "home", "away","urls"]
-print(df)
+pd.set_option('max_colwidth', 1000)
+display(df)
