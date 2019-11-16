@@ -45,9 +45,20 @@ def parse_games(game_day, game_time_list, game_team_list, game_odds_list,game_ur
         game_list.append(record)
     return game_list
 
+#Profitable or not
+def Profitable_games(oddA,oddB):
+    
+    larger=max(oddA,oddB)
+    smaller=min(oddA,oddB)
+    # larger number must be larger than 2 
+    if(larger>2 and ((smaller*(larger-1))/larger)>=1):
+        print('success')
+    # prompt email
+    else:
+        print ('false')
+
 #for all game matches
 all_games_list = []
-
 
 # Start 
 for game in soup.find_all("div", class_=tag['games']):
@@ -78,4 +89,15 @@ df = pd.DataFrame(flat_games_list)
 
 df.columns = ["date", "time", "home_odds", "away_odds", "home", "away","urls"]
 pd.set_option('max_colwidth', 1000)
+
 display(df)
+#display(df['home_odds'].values[0])
+#display(df['away_odds'].values[0])
+
+#display(df.shape[0])
+#df.shape[0]  # gives number of row count
+#df.shape[1]  # gives number of col count
+
+for row in df.itertuples(): 
+    Profitable_games(pd.to_numeric(df['home_odds'].values[row.Index]),pd.to_numeric(df['away_odds'].values[row.Index]))
+
